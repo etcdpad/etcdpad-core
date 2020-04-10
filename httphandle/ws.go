@@ -156,9 +156,10 @@ func (eh *EtcdHandle) addEtcdClient(client *websocketClient) error {
 
 		go etcdStore.Watch(context.Background(), revision, client.etcdprefix, eh.etchChangeC)
 	} else {
-		// 当前etcd watch的prefix，需要修改
-		// 例：current watch prefix: /foo/bar
-		// 新的client watch  prefix: /foo
+		// current etcd watch prefix key need modify
+		// for example
+		// current watch prefix: /foo/bar
+		// new client watch prefix: /foo
 		if strings.HasPrefix(etcdStore.WatchPrefix(), client.etcdprefix) {
 			etcdStore.WatchClose()
 			etcdStore.SetWatchPrefix(client.etcdprefix)
@@ -169,7 +170,7 @@ func (eh *EtcdHandle) addEtcdClient(client *websocketClient) error {
 			go etcdStore.Watch(context.Background(), revision, client.etcdprefix, eh.etchChangeC)
 		} else {
 			if !strings.HasPrefix(client.etcdprefix, etcdStore.WatchPrefix()) {
-				return fmt.Errorf("watch prefix [%s] 非从根目录开始", client.etcdprefix)
+				return fmt.Errorf("watch prefix [%s] must be from /", client.etcdprefix)
 			}
 		}
 	}

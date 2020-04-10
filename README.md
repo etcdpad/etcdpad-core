@@ -1,13 +1,17 @@
 # etcdpad-core
 
-etcdpad-core is [etcdpad](https://github.com/etcdpad/etcdpad) server which etcd web ui.
+etcdpad-core is [etcdpad-web](https://github.com/etcdpad/etcdpad-web) server which etcdv3 web ui.
 
 * Support etcd 3.x only.
-* The server use websocket protocol, support etcd `query`, `create`, `delete`, `watch` operators.
-* Support multiple etcd instances to connect at the same time.
-* Support multiple etcd key prefixes connection multiplex the same etcd instance.
+* The server use websocket protocol, support etcdv3 `query`, `create`, `delete`, `watch` operators.
+* Support multiple etcdv3 instances to connect at the same time.
+* Support multiple etcdv3 key prefixes connection multiplex the same etcdv3 instance.
 * Support one connection operate some values change can push to others actively.
 * `create` and `delete` operators will record log.
+
+## Go Version
+
+go1.14
 
 ## Usage 
 

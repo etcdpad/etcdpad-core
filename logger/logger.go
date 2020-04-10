@@ -17,21 +17,20 @@ func NewLogger(logFilename string, level zapcore.Level, stdout bool) *zap.Logger
 		MessageKey:     "msg",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder, // 小写编码器
-		EncodeTime:     zapcore.ISO8601TimeEncoder,  // ISO8601 UTC 时间格式
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.FullCallerEncoder, // 全路径编码器
+		EncodeCaller:   zapcore.FullCallerEncoder,
 	}
 
 	hook := lumberjack.Logger{
-		Filename:   logFilename, // 日志文件路径
-		MaxSize:    512,         // 每个日志文件保存的最大尺寸 单位：M
-		MaxBackups: 1000,        // 日志文件最多保存多少个备份
-		MaxAge:     70,          // 文件最多保存多少天
-		Compress:   true,        // 是否压缩
+		Filename:   logFilename,
+		MaxSize:    512, //MB
+		MaxBackups: 1000,
+		MaxAge:     70,
+		Compress:   true,
 	}
 
-	// 设置日志级别
 	atomicLevel := zap.NewAtomicLevel()
 	atomicLevel.SetLevel(level)
 
@@ -44,9 +43,9 @@ func NewLogger(logFilename string, level zapcore.Level, stdout bool) *zap.Logger
 	}
 
 	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderConfig),    // 编码器配置
-		zapcore.NewMultiWriteSyncer(writeSyncer...), // 打印到控制台和文件
-		atomicLevel, // 日志级别
+		zapcore.NewConsoleEncoder(encoderConfig),
+		zapcore.NewMultiWriteSyncer(writeSyncer...),
+		atomicLevel,
 	)
 
 	logger := zap.New(core)
