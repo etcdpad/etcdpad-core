@@ -1,0 +1,1 @@
+# etcdpad-core
