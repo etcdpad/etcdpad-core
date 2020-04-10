@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -188,6 +189,10 @@ func (eh *EtcdHandle) addEtcdClient(client *websocketClient) error {
 }
 
 func decode(username, password string, endpoints []string) string {
+	sort.Slice(endpoints, func(i, j int) bool {
+		return endpoints[i] < endpoints[j]
+	})
+
 	cha := username + password + strings.Join(endpoints, ",")
 	h := sha256.New()
 	h.Write([]byte(cha))
