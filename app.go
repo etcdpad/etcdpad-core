@@ -31,7 +31,7 @@ func main() {
 		defaultpath = fmt.Sprintf("%s/%s", dir, "oplog.log")
 	}
 
-	flag.IntVar(&port, "port", 58518, "websocket listen port")
+	flag.IntVar(&port, "port", 8989, "websocket listen port")
 	flag.StringVar(&logpath, "logpath", defaultpath, "websocket client operate log file directory")
 	flag.BoolVar(&stdout, "stdout", true, "epad log output to stdout")
 
