@@ -50,22 +50,14 @@ func (etcd *EtcdStorage) WatchClose() {
 	etcd.client.Watcher.Close()
 }
 
-func (etcd *EtcdStorage) Query(key string, withprefix bool, limit int64) (*clientv3.GetResponse, error) {
+func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit int64) (*clientv3.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), etcdOpTimeout)
 	defer cancel()
 
 	opts := []clientv3.OpOption{}
 	if withprefix {
-		endKey := []byte("\x00")
-		if len(key) > 0 {
-			endKey = []byte(key)
-			endKey[len(endKey)-1]++
-		}
-
 		opts = []clientv3.OpOption{
-			clientv3.WithPrefix(),
-			clientv3.WithRange(string(endKey)),
-			//clientv3.WithFromKey(),
+			clientv3.WithRange(endkey),
 			clientv3.WithKeysOnly(),
 			clientv3.WithSerializable(),
 			clientv3.WithSort(clientv3.SortByKey, clientv3.SortAscend),
@@ -126,7 +118,7 @@ type EtcdEvent struct {
 	Type   string             `json:"type"`
 	More   bool               `json:"more"`
 	Header *pb.ResponseHeader `json:"header"`
-	Kvs    []*mvccpb.KeyValue `json:"kvs,omitempty"`
+	Kvs    []*mvccpb.KeyValue `json:"kvs"`
 	PrevKv *mvccpb.KeyValue   `json:"prev_kv,omitempty"`
 }
 

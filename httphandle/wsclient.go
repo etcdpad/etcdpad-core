@@ -8,6 +8,7 @@ import (
 
 	"github.com/etcdpad/etcdpad-core/etcd"
 
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
 	"github.com/xkeyideal/gokit/tools"
@@ -58,6 +59,7 @@ type CommunicateMessage struct {
 	Lease  int64  `json:"lease"`
 	Limit  int64  `json:"limit"`
 	Prefix bool   `json:"prefix"`
+	EndKey string `json:"endkey"`
 }
 
 func (cm *CommunicateMessage) String() string {
@@ -217,7 +219,7 @@ func (client *websocketClient) write() {
 				fields = append(fields, zap.Bool("success", cresp.Success))
 				client.logger.Warn(fmt.Sprintf("[%s] delete", client.uuid), fields...)
 			case clientOpTypeQuery:
-				resp, err := client.etcdStore.Query(cm.Key, cm.Prefix, cm.Limit)
+				resp, err := client.etcdStore.Query(cm.Key, cm.Prefix, cm.EndKey, cm.Limit)
 				if err != nil {
 					cresp.Err = err.Error()
 				} else {
@@ -225,7 +227,10 @@ func (client *websocketClient) write() {
 					cresp.Event = &etcd.EtcdEvent{
 						More:   resp.More,
 						Header: resp.Header,
-						Kvs:    resp.Kvs,
+						Kvs:    []*mvccpb.KeyValue{},
+					}
+					if len(resp.Kvs) > 0 {
+						cresp.Event.Kvs = resp.Kvs
 					}
 				}
 			case clientOpTypePing:
