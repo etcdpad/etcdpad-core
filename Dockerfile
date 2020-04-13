@@ -9,7 +9,7 @@ RUN apk add --update bash curl tzdata \
     && echo 'Asia/Shanghai' > /etc/timezone \
     && GOPROXY=https://goproxy.cn GO111MODULE=on go build -o app app.go
 
-FROM golang:1.14.1-alpine3.11
+FROM alpine:3.11
 RUN apk add --update bash curl tzdata \
     && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' > /etc/timezone
