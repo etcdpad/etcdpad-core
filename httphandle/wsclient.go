@@ -60,6 +60,15 @@ type CommunicateMessage struct {
 	Limit  int64  `json:"limit"`
 	Prefix bool   `json:"prefix"`
 	EndKey string `json:"endkey"`
+
+	// Revision is a global revision. ModRevision is the revision that the key is modified.
+	// the Revision is the current revision of etcd.
+	// It is incremented every time the v3 backed is modified (e.g., Put, Delete, Txn).
+	// ModRevision is the etcd revision of the last update to a key.
+	// Version is the number of times the key has been modified since it was created.
+	// Get(..., WithRev(rev)) will perform a Get as if the etcd store is still at revision rev
+	// CreateRevision is the revision of last creation on this key.
+	Revision *int64 `json:"revision"`
 }
 
 func (cm *CommunicateMessage) String() string {
@@ -219,7 +228,7 @@ func (client *websocketClient) write() {
 				fields = append(fields, zap.Bool("success", cresp.Success))
 				client.logger.Warn(fmt.Sprintf("[%s] delete", client.uuid), fields...)
 			case clientOpTypeQuery:
-				resp, err := client.etcdStore.Query(cm.Key, cm.Prefix, cm.EndKey, cm.Limit)
+				resp, err := client.etcdStore.Query(cm.Key, cm.Prefix, cm.EndKey, cm.Limit, cm.Revision)
 				if err != nil {
 					cresp.Err = err.Error()
 				} else {

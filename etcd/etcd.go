@@ -50,7 +50,7 @@ func (etcd *EtcdStorage) WatchClose() {
 	etcd.client.Watcher.Close()
 }
 
-func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit int64) (*clientv3.GetResponse, error) {
+func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit int64, revision *int64) (*clientv3.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), etcdOpTimeout)
 	defer cancel()
 
@@ -68,6 +68,12 @@ func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit
 		}
 	} else {
 		opts = append(opts, clientv3.WithPrevKV())
+	}
+
+	if revision != nil {
+		if *revision >= 0 {
+			opts = append(opts, clientv3.WithRev(*revision))
+		}
 	}
 
 	return etcd.client.Get(ctx, key, opts...)
