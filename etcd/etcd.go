@@ -66,8 +66,6 @@ func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit
 		if limit > 0 {
 			opts = append(opts, clientv3.WithLimit(limit))
 		}
-	} else {
-		opts = append(opts, clientv3.WithPrevKV())
 	}
 
 	if revision != nil {
@@ -83,15 +81,20 @@ func (etcd *EtcdStorage) Create(key, val string, lease int64) (*clientv3.PutResp
 	ctx, cancel := context.WithTimeout(context.Background(), etcdOpTimeout)
 	defer cancel()
 
+	opts := []clientv3.OpOption{
+		clientv3.WithPrevKV(),
+	}
+
 	if lease > 0 {
 		lease, err := etcd.client.Grant(ctx, lease)
 		if err != nil {
 			return nil, err
 		}
-		return etcd.client.Put(ctx, key, val, clientv3.WithLease(lease.ID))
+
+		opts = append(opts, clientv3.WithLease(lease.ID))
 	}
 
-	return etcd.client.Put(ctx, key, val)
+	return etcd.client.Put(ctx, key, val, opts...)
 }
 
 func (etcd *EtcdStorage) Delete(key string, withprefix bool) error {
