@@ -114,7 +114,16 @@ func (etcd *EtcdStorage) GetRevision(key string) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), etcdOpTimeout)
 	defer cancel()
 
-	resp, err := etcd.client.Get(ctx, key, clientv3.WithCountOnly())
+	opts := []clientv3.OpOption{
+		clientv3.WithCountOnly(),
+	}
+
+	if len(key) == 0 {
+		opts = append(opts, clientv3.WithFromKey())
+		key = "\x00"
+	}
+
+	resp, err := etcd.client.Get(ctx, key, opts...)
 	if err != nil {
 		return 0, err
 	}
@@ -132,7 +141,18 @@ type EtcdEvent struct {
 }
 
 func (etcd *EtcdStorage) Watch(ctx context.Context, revision int64, key string, c chan *EtcdEvent) {
-	watchC := etcd.client.Watch(ctx, key, clientv3.WithPrefix(), clientv3.WithPrevKV(), clientv3.WithRev(revision))
+	opts := []clientv3.OpOption{
+		clientv3.WithPrefix(),
+		clientv3.WithPrevKV(),
+		clientv3.WithRev(revision),
+	}
+
+	if len(key) == 0 {
+		opts = append(opts, clientv3.WithFromKey())
+		key = "\x00"
+	}
+
+	watchC := etcd.client.Watch(ctx, key, opts...)
 
 	for {
 		select {

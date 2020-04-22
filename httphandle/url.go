@@ -32,7 +32,7 @@ func isOptSep(c rune) bool {
 func extractURL(s string) (*urlInfo, error) {
 	s = strings.TrimPrefix(s, "etcd://")
 	info := &urlInfo{
-		prefix:  "\x00",
+		prefix:  "",
 		options: []urlInfoOption{},
 	}
 
