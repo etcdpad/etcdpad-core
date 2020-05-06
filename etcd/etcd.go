@@ -22,6 +22,9 @@ type EtcdStorage struct {
 	watchPrefix string
 	client      *clientv3.Client
 	exitChan    chan struct{}
+
+	watchCtx    context.Context
+	watchCancel context.CancelFunc
 }
 
 func NewEtcdStorage(id, watchPrefix string, client *clientv3.Client) *EtcdStorage {
@@ -47,7 +50,7 @@ func (etcd *EtcdStorage) Close() {
 }
 
 func (etcd *EtcdStorage) WatchClose() {
-	etcd.client.Watcher.Close()
+	etcd.watchCancel()
 }
 
 func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit int64, revision *int64) (*clientv3.GetResponse, error) {
@@ -141,6 +144,8 @@ type EtcdEvent struct {
 }
 
 func (etcd *EtcdStorage) Watch(ctx context.Context, revision int64, key string, c chan *EtcdEvent) {
+	etcd.watchCtx, etcd.watchCancel = context.WithCancel(ctx)
+
 	opts := []clientv3.OpOption{
 		clientv3.WithPrefix(),
 		clientv3.WithPrevKV(),
@@ -156,12 +161,12 @@ func (etcd *EtcdStorage) Watch(ctx context.Context, revision int64, key string, 
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-etcd.watchCtx.Done():
 			return
 		case <-etcd.exitChan:
 			return
-		case resp := <-watchC:
-			if resp.Canceled {
+		case resp, ok := <-watchC:
+			if resp.Canceled || !ok {
 				return
 			}
 
