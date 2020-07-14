@@ -28,12 +28,16 @@ type EtcdStorage struct {
 }
 
 func NewEtcdStorage(id, watchPrefix string, client *clientv3.Client) *EtcdStorage {
-	return &EtcdStorage{
+	etcd := &EtcdStorage{
 		id:          id,
 		watchPrefix: watchPrefix,
 		client:      client,
 		exitChan:    make(chan struct{}),
 	}
+
+	etcd.watchCtx, etcd.watchCancel = context.WithCancel(context.Background())
+
+	return etcd
 }
 
 func (etcd *EtcdStorage) WatchPrefix() string {
@@ -143,8 +147,7 @@ type EtcdEvent struct {
 	PrevKv *mvccpb.KeyValue   `json:"prev_kv,omitempty"`
 }
 
-func (etcd *EtcdStorage) Watch(ctx context.Context, revision int64, key string, c chan *EtcdEvent) {
-	etcd.watchCtx, etcd.watchCancel = context.WithCancel(ctx)
+func (etcd *EtcdStorage) Watch(revision int64, key string, c chan *EtcdEvent) {
 
 	opts := []clientv3.OpOption{
 		clientv3.WithPrefix(),
@@ -157,7 +160,7 @@ func (etcd *EtcdStorage) Watch(ctx context.Context, revision int64, key string, 
 		key = "\x00"
 	}
 
-	watchC := etcd.client.Watch(ctx, key, opts...)
+	watchC := etcd.client.Watch(etcd.watchCtx, key, opts...)
 
 	for {
 		select {

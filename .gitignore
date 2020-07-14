@@ -76,3 +76,4 @@ $RECYCLE.BIN/
 etcdpad-core
 test
 testdata
+oplog.log

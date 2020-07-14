@@ -1,7 +1,6 @@
 package httphandle
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -155,7 +154,7 @@ func (eh *EtcdHandle) addEtcdClient(client *websocketClient) error {
 			return err
 		}
 
-		go etcdStore.Watch(context.Background(), revision, client.etcdprefix, eh.etchChangeC)
+		go etcdStore.Watch(revision, client.etcdprefix, eh.etchChangeC)
 	} else {
 		// current etcd watch prefix key need modify
 		// for example
@@ -168,7 +167,7 @@ func (eh *EtcdHandle) addEtcdClient(client *websocketClient) error {
 			if err != nil {
 				return err
 			}
-			go etcdStore.Watch(context.Background(), revision, client.etcdprefix, eh.etchChangeC)
+			go etcdStore.Watch(revision, client.etcdprefix, eh.etchChangeC)
 		} else {
 			if !strings.HasPrefix(client.etcdprefix, etcdStore.WatchPrefix()) {
 				return fmt.Errorf("watch prefix [%s] must be from /", client.etcdprefix)
