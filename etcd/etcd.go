@@ -35,8 +35,6 @@ func NewEtcdStorage(id, watchPrefix string, client *clientv3.Client) *EtcdStorag
 		exitChan:    make(chan struct{}),
 	}
 
-	etcd.watchCtx, etcd.watchCancel = context.WithCancel(context.Background())
-
 	return etcd
 }
 
@@ -148,6 +146,7 @@ type EtcdEvent struct {
 }
 
 func (etcd *EtcdStorage) Watch(revision int64, key string, c chan *EtcdEvent) {
+	etcd.watchCtx, etcd.watchCancel = context.WithCancel(context.Background())
 
 	opts := []clientv3.OpOption{
 		clientv3.WithPrefix(),
@@ -165,6 +164,7 @@ func (etcd *EtcdStorage) Watch(revision int64, key string, c chan *EtcdEvent) {
 	for {
 		select {
 		case <-etcd.watchCtx.Done():
+			//fmt.Println("a ...interface{}: ctx.Done")
 			return
 		case <-etcd.exitChan:
 			return

@@ -80,7 +80,7 @@ func newEngine() *Engine {
 	engine.registerRouter()
 
 	engine.server = &http.Server{
-		Addr:         fmt.Sprintf("0.0.0.0:%d", 12345),
+		Addr:         fmt.Sprintf("0.0.0.0:%d", 12346),
 		Handler:      engine.router,
 		ReadTimeout:  20 * time.Second,
 		WriteTimeout: 40 * time.Second,

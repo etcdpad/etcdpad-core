@@ -242,12 +242,12 @@ func (client *websocketClient) write() {
 						cresp.Event.Kvs = resp.Kvs
 					}
 				}
-				client.conn.WriteMessage(websocket.TextMessage, cresp.Bytes())
 			case clientOpTypePing:
 				cresp.Action = clientOpTypePong
 				cresp.Success = true
-				client.conn.WriteMessage(websocket.TextMessage, cresp.Bytes())
 			}
+
+			client.conn.WriteMessage(websocket.TextMessage, cresp.Bytes())
 		case <-ticker.C:
 			if tools.CSTNow().Sub(client.lastActive) > 120*time.Second {
 				client.wg.Done()
