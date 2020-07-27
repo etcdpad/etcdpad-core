@@ -58,7 +58,7 @@ func (eh *EtcdHandle) handleEtcdEvent() {
 				key = string(event.PrevKv.Key)
 			}
 
-			cresp := CommunicateResponse{
+			cresp := &CommunicateResponse{
 				Success: true,
 				Action:  clientOpTypeWatch,
 				Key:     key,
