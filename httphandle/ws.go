@@ -145,7 +145,7 @@ func (eh *EtcdHandle) addEtcdClient(client *websocketClient) error {
 		if err != nil {
 			return err
 		}
-		///
+
 		etcdStore = etcd.NewEtcdStorage(client.key, client.etcdprefix, etcdClient)
 		eh.etcdStores[client.key] = etcdStore
 

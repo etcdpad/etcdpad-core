@@ -52,7 +52,9 @@ func (etcd *EtcdStorage) Close() {
 }
 
 func (etcd *EtcdStorage) WatchClose() {
-	etcd.watchCancel()
+	if etcd.watchCancel != nil {
+		etcd.watchCancel()
+	}
 }
 
 func (etcd *EtcdStorage) Query(key string, withprefix bool, endkey string, limit int64, revision *int64) (*clientv3.GetResponse, error) {
@@ -146,8 +148,6 @@ type EtcdEvent struct {
 }
 
 func (etcd *EtcdStorage) Watch(revision int64, key string, c chan *EtcdEvent) {
-	etcd.watchCtx, etcd.watchCancel = context.WithCancel(context.Background())
-
 	opts := []clientv3.OpOption{
 		clientv3.WithPrefix(),
 		clientv3.WithPrevKV(),
@@ -159,41 +159,49 @@ func (etcd *EtcdStorage) Watch(revision int64, key string, c chan *EtcdEvent) {
 		key = "\x00"
 	}
 
-	watchC := etcd.client.Watch(etcd.watchCtx, key, opts...)
-
 	for {
-		select {
-		case <-etcd.watchCtx.Done():
-			//fmt.Println("a ...interface{}: ctx.Done")
-			return
-		case <-etcd.exitChan:
-			return
-		case resp, ok := <-watchC:
-			if resp.Canceled || !ok {
+		etcd.watchCtx, etcd.watchCancel = context.WithCancel(context.Background())
+		watchC := etcd.client.Watch(etcd.watchCtx, key, opts...)
+	loop:
+		for {
+			select {
+			case <-etcd.exitChan:
+				etcd.watchCancel()
 				return
-			}
+			case resp, ok := <-watchC:
+				if resp.Canceled || !ok || resp.Err() != nil {
+					etcd.watchCancel()
+					time.Sleep(100 * time.Millisecond)
 
-			for _, event := range resp.Events {
-				switch event.Type {
-				case clientv3.EventTypeDelete:
-					c <- &EtcdEvent{
-						ID:     etcd.id,
-						Type:   EtcdEventTypeDelete,
-						Header: &resp.Header,
-						Kvs:    []*mvccpb.KeyValue{event.Kv},
-						PrevKv: event.PrevKv,
+					v, err := etcd.GetRevision(key)
+					if err == nil {
+						revision = v
 					}
-				case clientv3.EventTypePut:
-					typ := EtcdEventTypeUpdate
-					if event.IsCreate() {
-						typ = EtcdEventTypeCreate
-					}
-					c <- &EtcdEvent{
-						ID:     etcd.id,
-						Type:   typ,
-						Header: &resp.Header,
-						Kvs:    []*mvccpb.KeyValue{event.Kv},
-						PrevKv: event.PrevKv,
+					break loop
+				}
+
+				for _, event := range resp.Events {
+					switch event.Type {
+					case clientv3.EventTypeDelete:
+						c <- &EtcdEvent{
+							ID:     etcd.id,
+							Type:   EtcdEventTypeDelete,
+							Header: &resp.Header,
+							Kvs:    []*mvccpb.KeyValue{event.Kv},
+							PrevKv: event.PrevKv,
+						}
+					case clientv3.EventTypePut:
+						typ := EtcdEventTypeUpdate
+						if event.IsCreate() {
+							typ = EtcdEventTypeCreate
+						}
+						c <- &EtcdEvent{
+							ID:     etcd.id,
+							Type:   typ,
+							Header: &resp.Header,
+							Kvs:    []*mvccpb.KeyValue{event.Kv},
+							PrevKv: event.PrevKv,
+						}
 					}
 				}
 			}
